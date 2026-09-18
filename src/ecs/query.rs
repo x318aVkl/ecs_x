@@ -1,6 +1,6 @@
 use std::{any::{Any, TypeId}, cell::{Ref, RefCell, RefMut}, marker::PhantomData};
 
-use crate::{ecs_table::{ComponentTableIterator, EcsTable, Entity}, scheduler::AppStateInfo, system::SystemParam};
+use super::{ecs_table::{ComponentTableIterator, EcsTable, Entity}, scheduler::AppStateInfo, system::SystemParam};
 
 
 pub struct Query<'a, Components, Filters = ()> {
@@ -13,7 +13,7 @@ pub struct Query<'a, Components, Filters = ()> {
 
 impl<'a, C, F> SystemParam for Query<'a, C, F> {
     type Item<'new> = Query<'new, C, F>;
-    fn retrieve<'r>(_resources: &'r crate::scheduler::Resources, ecs_table: &'r EcsTable, _commands: &'r crate::scheduler::CommandsQueue, _state: Option<AppStateInfo<'r>>) -> Self::Item<'r> {
+    fn retrieve<'r>(_resources: &'r super::scheduler::Resources, ecs_table: &'r EcsTable, _commands: &'r super::scheduler::CommandsQueue, _state: Option<AppStateInfo<'r>>) -> Self::Item<'r> {
         Query {
             table: ecs_table,
             _marker: PhantomData,
@@ -111,14 +111,18 @@ macro_rules! impl_query_get {
                 )*
 
                 if mintablelen == usize::MAX {
-                    panic!("mintablelen is too large");
+                    // no table matches, means we should iterate over nothing
+                    return QueryIterator {
+                        query: self,
+                        entity_iterator: None,
+                    };
                 }
 
                 let mintable = mintable.unwrap();
 
                 QueryIterator {
                     query: self,
-                    entity_iterator: unsafe{self.table.get(&mintable).unwrap().try_borrow_unguarded().unwrap()}.keys()
+                    entity_iterator: Some(unsafe{self.table.get(&mintable).unwrap().try_borrow_unguarded().unwrap()}.keys()),
                 }
 
             }
@@ -168,27 +172,31 @@ pub trait QueryIterate {
 
 pub struct QueryIterator<'a, Query, I> {
     query: &'a Query,
-    entity_iterator: I,
+    entity_iterator: Option<I>,
 }
 
 impl<'a, 'b, Query: QueryGet, I: Iterator<Item = &'b Entity>> Iterator for QueryIterator<'b, Query, I> where 'a: 'b {
     type Item = (Entity, <Query as QueryGet>::Output<'b>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.entity_iterator.next() {
-            Some(e) => {
-                match self.query.get(*e) {
-                    Some(c) => {
-                        Some((*e, c))
-                    },
-                    None => {
-                        None
+        if let Some(entity_iterator) = self.entity_iterator.as_mut() {
+            match entity_iterator.next() {
+                Some(e) => {
+                    match self.query.get(*e) {
+                        Some(c) => {
+                            Some((*e, c))
+                        },
+                        None => {
+                            None
+                        }
                     }
+                },
+                None => {
+                    None
                 }
-            },
-            None => {
-                None
             }
+        } else {
+            None
         }
     }
 }

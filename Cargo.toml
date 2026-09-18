@@ -6,3 +6,10 @@ edition = "2024"
 [dependencies]
 nohash-hasher = "0.2.0"
 rand = "0.10.2"
+wgpu = { version = "30.0.1", default-features = false, features = ["vulkan"], optional = true }
+winit = { version="0.30.13", default-features = false, features = ["x11"], optional = true }
+
+
+[features]
+default = ["graphics"]
+graphics = ["winit", "wgpu"]

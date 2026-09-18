@@ -1,6 +1,6 @@
 use std::{any::Any, cell::{Ref, RefMut}, marker::PhantomData, ops::{Deref, DerefMut}};
 
-use crate::{ecs_table::EcsTable, scheduler::{AppStateInfo, CommandsQueue, Resources}};
+use super::{ecs_table::EcsTable, scheduler::{AppStateInfo, CommandsQueue, Resources}};
 
 use std::any::TypeId;
 
@@ -80,6 +80,12 @@ impl_system!(T1);
 impl_system!(T1, T2);
 impl_system!(T1, T2, T3);
 impl_system!(T1, T2, T3, T4);
+impl_system!(T1, T2, T3, T4, T5);
+impl_system!(T1, T2, T3, T4, T5, T6);
+impl_system!(T1, T2, T3, T4, T5, T6, T7);
+impl_system!(T1, T2, T3, T4, T5, T6, T7, T8);
+impl_system!(T1, T2, T3, T4, T5, T6, T7, T8, T9);
+impl_system!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10);
 
 
 pub trait SystemParam {

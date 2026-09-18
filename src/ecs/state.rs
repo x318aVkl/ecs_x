@@ -1,6 +1,6 @@
 use std::{any::{Any, TypeId}, cell::{Ref, RefMut}, marker::PhantomData, ops::{Deref, DerefMut}};
 
-use crate::system::SystemParam;
+use super::system::SystemParam;
 
 
 
@@ -12,7 +12,7 @@ pub struct State<'a, T: 'static> {
 impl<'res, T: 'static> SystemParam for Option<State<'res, T>> {
     type Item<'new> = Option<State<'new, T>>;
 
-    fn retrieve<'r>(_resources: &'r crate::scheduler::Resources, _ecs_table: &'r crate::ecs_table::EcsTable, _commands: &'r crate::scheduler::CommandsQueue, state: Option<crate::scheduler::AppStateInfo<'r>>) -> Self::Item<'r> {
+    fn retrieve<'r>(_resources: &'r super::scheduler::Resources, _ecs_table: &'r super::ecs_table::EcsTable, _commands: &'r super::scheduler::CommandsQueue, state: Option<super::scheduler::AppStateInfo<'r>>) -> Self::Item<'r> {
         if let Some(state) = state {
             if state.current_state == TypeId::of::<T>() {
                 Some(State {
@@ -45,7 +45,7 @@ pub struct StateMut<'a, T: 'static> {
 impl<'res, T: 'static> SystemParam for Option<StateMut<'res, T>> {
     type Item<'new> = Option<StateMut<'new, T>>;
 
-    fn retrieve<'r>(_resources: &'r crate::scheduler::Resources, _ecs_table: &'r crate::ecs_table::EcsTable, _commands: &'r crate::scheduler::CommandsQueue, state: Option<crate::scheduler::AppStateInfo<'r>>) -> Self::Item<'r> {
+    fn retrieve<'r>(_resources: &'r super::scheduler::Resources, _ecs_table: &'r super::ecs_table::EcsTable, _commands: &'r super::scheduler::CommandsQueue, state: Option<super::scheduler::AppStateInfo<'r>>) -> Self::Item<'r> {
         if let Some(state) = state {
             if state.current_state == TypeId::of::<T>() {
                 Some(StateMut {

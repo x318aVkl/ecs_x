@@ -1,9 +1,10 @@
 use std::{any::{Any, TypeId}, cell::RefCell};
 
-use crate::{ecs_table::{EcsTable, Entity}, scheduler::{AppStateInfo, CommandsQueue, Enter, Exit, Resources}, system::SystemParam};
+use super::{ecs_table::{EcsTable, Entity}, scheduler::{AppStateInfo, CommandsQueue, Enter, Exit, Resources}, system::SystemParam};
 
 
 
+#[derive(Debug)]
 pub enum SystemMessage {
     Exit(u32),
     ChangeState{new_state: TypeId, new_enter_state: TypeId, new_exit_state: TypeId, data: Box<dyn Any>},

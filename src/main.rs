@@ -1,4 +1,6 @@
-use ecs::{commands::{Commands, SpawnEntity}, plugin::Plugin, query::{Query, QueryIter, With}, scheduler::{AddPlugins, AddSystems, App, Enter, Exit, Startup, Update}, state::State, system::{Res, ResMut}};
+
+use ecs_x::{ecs::{commands::{Commands, SpawnEntity}, event::{EventPlugin, EventReader, EventWriter}, plugin::Plugin, query::{Query, QueryIter, With}, scheduler::{AddPlugins, AddSystems, App, Enter, Exit, Startup, Update}, state::State, system::{Res, ResMut}}, graphics::{Window, WindowPlugin, window::PrimaryWindow}};
+use winit::dpi::LogicalSize;
 
 
 
@@ -20,11 +22,24 @@ impl Plugin for MyPlugin {
     }
 }
 
+struct MyEvent {
+    value: i32,
+}
 
 fn main() {
 
     App::new()
-        .add_plugins((MyPlugin,))
+        .add_plugins((
+            MyPlugin,
+            EventPlugin::<MyEvent>::default(),
+            WindowPlugin {
+                primary_window: winit::window::WindowAttributes::default()
+                    .with_title("My window")
+                    .with_inner_size(LogicalSize::new(1280, 720))
+                ,
+                ..Default::default()
+            },
+        ))
         .add_systems::<Startup>((foo,))
         .add_systems::<Update>((bar, gogo))
         .run()
@@ -42,12 +57,16 @@ fn foo(
     for i in 0..1_000 {
         commands.spawn((i as i32, 1_u32,));
     }
+
+    println!("done with startup stuff");
 }
 
 fn bar(
     mut value: ResMut<u32>,
     q: Query<(&mut i32, &u32), (With<u32>,)>,
     mut commands: Commands,
+    mut writer: ResMut<EventWriter<MyEvent>>,
+    windows: Query<(&Window,), (With<PrimaryWindow>,)>,
 ) {
 
     let mut k = 0;
@@ -60,7 +79,11 @@ fn bar(
     }
 
     *value += 1;
-    println!("{:?}", *value);
+    println!("{} {}", k, *value);
+
+    if *value == 4 {
+        writer.write(MyEvent { value: 0 });
+    }
 
     if *value == 20 {
         commands.change_state(Moving {
@@ -72,21 +95,30 @@ fn bar(
         commands.change_state(Still);
     }
 
-    if *value > 60 {
-        commands.exit(0);
+    if *value == 2000 {
+        if let Some((window, _)) = windows.iter().nth(0) {
+            println!("despawining window");
+            commands.despawn(window);
+        }
     }
+
 }
 
 fn gogo(
     res: Res<u32>,
     moving: Option<State<Moving>>,
     mut commands: Commands,
+    reader: Res<EventReader<MyEvent>>,
 ) {
+
+    for event in reader.read() {
+        println!("got an event! {}", event.value);
+    }
 
     if let Some(moving) = moving {
         println!("currently moving {:?}", moving.velocity);
     } else {
-        println!("not moving")
+        //println!("not moving")
     }
 }
 
