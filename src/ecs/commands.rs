@@ -1,13 +1,13 @@
 use std::{any::{Any, TypeId}, cell::RefCell};
 
-use super::{ecs_table::{EcsTable, Entity}, scheduler::{AppStateInfo, CommandsQueue, Enter, Exit, Resources}, system::SystemParam};
-
+use super::{ecs_table::{EcsTable, Entity, generate_entity}, scheduler::{AppStateInfo, CommandsQueue, Enter, Exit, Resources}, system::SystemParam};
 
 
 #[derive(Debug)]
 pub enum SystemMessage {
     Exit(u32),
     ChangeState{new_state: TypeId, new_enter_state: TypeId, new_exit_state: TypeId, data: Box<dyn Any>},
+    WindowCreated(Entity),
 }
 
 
@@ -77,27 +77,6 @@ impl<'a> Commands<'a> {
 }
 
 
-fn table_contains(table: &EcsTable, id: Entity) -> bool {
-    for (_, subtable) in table.iter() {
-        if subtable.borrow().contains_key(&id) {
-            return true;
-        }
-    }
-    false
-}
-
-
-fn generate_entity(table: &EcsTable) -> Entity {
-    let mut id = Entity(rand::random());
-
-    while table_contains(table, id) {
-        println!("collision!");
-        id = Entity(rand::random());
-    }
-    
-    return id;
-}
-
 
 
 pub trait SpawnEntity<Inputs> {
@@ -117,11 +96,24 @@ macro_rules! impl_commands_spawn_entity {
                 self.queue.borrow_mut().push(Box::new(move |_resources: &mut Resources, table: &mut EcsTable| {
                     let entity = generate_entity(table);
 
+                    let mut window_created = false;
                     $(
-                        table.entry(TypeId::of::<$params>()).or_default().borrow_mut().insert(entity, RefCell::new(Box::new(components.$n)));
+                        let tid = TypeId::of::<$params>();
+                        table.entry(tid).or_default().borrow_mut().insert(entity, RefCell::new(Box::new(components.$n)));
+
+                        #[cfg(feature = "graphics")]
+                        {
+                            if tid == TypeId::of::<crate::graphics::window::Window>() {
+                                window_created = true;
+                            }
+                        }
                     )*
                     
-                    None
+                    if window_created {
+                        Some(SystemMessage::WindowCreated(entity))
+                    } else {
+                        None
+                    }
                 }));
             }
         }
@@ -137,6 +129,13 @@ impl_commands_spawn_entity!((T0, T1, T2, T3,), (0, 1, 2, 3,));
 impl_commands_spawn_entity!((T0, T1, T2, T3, T4,), (0, 1, 2, 3, 4,));
 impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5,), (0, 1, 2, 3, 4, 5,));
 impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6,), (0, 1, 2, 3, 4, 5, 6,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7,), (0, 1, 2, 3, 4, 5, 6, 7,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7, T8,), (0, 1, 2, 3, 4, 5, 6, 7, 8,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,), (0, 1, 2, 3, 4, 5, 6, 7, 8, 9,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10,), (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, ), (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,));
+impl_commands_spawn_entity!((T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12,), (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,));
+
 
 
 impl<'a> Commands<'a> {

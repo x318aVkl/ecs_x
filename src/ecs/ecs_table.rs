@@ -4,7 +4,7 @@ use nohash_hasher::IsEnabled;
 
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Entity(pub u64);
+pub struct Entity(u64);
 
 
 pub type ComponentTable = HashMap<Entity, RefCell<Box<dyn Any>>, nohash_hasher::BuildNoHashHasher<Entity>>;
@@ -23,4 +23,26 @@ impl Hash for Entity {
 
 impl IsEnabled for Entity {
     
+}
+
+
+
+pub(super) fn generate_entity(table: &EcsTable) -> Entity {
+    let mut id = Entity(rand::random());
+
+    while table_contains(table, id) {
+        println!("collision!");
+        id = Entity(rand::random());
+    }
+    
+    return id;
+}
+
+fn table_contains(table: &EcsTable, id: Entity) -> bool {
+    for (_, subtable) in table.iter() {
+        if subtable.borrow().contains_key(&id) {
+            return true;
+        }
+    }
+    false
 }

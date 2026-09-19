@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use winit::{error::OsError, event_loop::{ActiveEventLoop, EventLoop}};
+use winit::{error::OsError, event::MouseButton, event_loop::ActiveEventLoop};
+
+use crate::ecs::ecs_table::Entity;
 
 
 
@@ -30,6 +32,9 @@ impl Window {
     }
     pub fn request_redraw(&self) {
         self.window.request_redraw();
+    }
+    pub fn id(&self) -> winit::window::WindowId {
+        self.window.id()
     }
 }
 
@@ -61,4 +66,35 @@ impl WindowManager {
 }
 
 
+
+// a pointer event
+pub struct Pointer<T> {
+    pub window: Entity,
+    pub button: MouseButton,
+    _event: T,
+}
+
+
+impl<T> Pointer<T> {
+    pub fn new(window: Entity, button: MouseButton,  event: T) -> Self {
+        Self { window, button, _event: event }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct PointerPosition {
+    pub x: f32,
+    pub y: f32,
+    pub(crate) initialized: bool,
+}
+
+pub struct Down;
+pub struct Up;
+
+pub struct PointerMoved {
+    pub window: Entity,
+    pub dx: f32,
+    pub dy: f32,
+}
 

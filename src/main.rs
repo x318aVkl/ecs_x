@@ -1,6 +1,5 @@
 
-use ecs_x::{ecs::{commands::{Commands, SpawnEntity}, event::{EventPlugin, EventReader, EventWriter}, plugin::Plugin, query::{Query, QueryIter, With}, scheduler::{AddPlugins, AddSystems, App, Enter, Exit, Startup, Update}, state::State, system::{Res, ResMut}}, graphics::{Window, WindowPlugin, window::PrimaryWindow}};
-use winit::dpi::LogicalSize;
+use ecs_x::{DefaultPlugins, ecs::{commands::{Commands, SpawnEntity}, event::{EventPlugin, EventReader, EventWriter}, plugin::Plugin, query::{Query, QueryIter, With}, scheduler::{AddPlugins, AddSystems, App, Enter, Exit, Startup, Update}, state::State, system::{Res, ResMut}}, graphics::{Window, WindowPlugin, window::{Down, Pointer, PointerMoved, PointerPosition, PrimaryWindow}}};
 
 
 
@@ -30,15 +29,9 @@ fn main() {
 
     App::new()
         .add_plugins((
+            DefaultPlugins::default(),
             MyPlugin,
             EventPlugin::<MyEvent>::default(),
-            WindowPlugin {
-                primary_window: winit::window::WindowAttributes::default()
-                    .with_title("My window")
-                    .with_inner_size(LogicalSize::new(1280, 720))
-                ,
-                ..Default::default()
-            },
         ))
         .add_systems::<Startup>((foo,))
         .add_systems::<Update>((bar, gogo))
@@ -71,7 +64,7 @@ fn bar(
 
     let mut k = 0;
     for (e, (mut x, _y)) in q.iter() {
-        *x = 3;
+        *x += 3;
         if k < 10 {
             commands.despawn(e);
         }
@@ -109,10 +102,22 @@ fn gogo(
     moving: Option<State<Moving>>,
     mut commands: Commands,
     reader: Res<EventReader<MyEvent>>,
+    pointer_reader: Res<EventReader<Pointer<Down>>>,
+    pmove_reader: Res<EventReader<PointerMoved>>,
+    position: Res<PointerPosition>,
 ) {
 
     for event in reader.read() {
         println!("got an event! {}", event.value);
+    }
+
+    for event in pointer_reader.read() {
+        println!("got a pointer event! {:?}", event.button);
+    }
+
+    for event in pmove_reader.read() {
+        println!("moved pointer: {} {}", event.dx, event.dy);
+        println!("pointer position: {} {}", position.x, position.y);
     }
 
     if let Some(moving) = moving {

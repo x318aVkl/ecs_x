@@ -1,6 +1,8 @@
 use std::{any::{Any, TypeId}, cell::RefCell, collections::HashMap};
 
 
+use crate::ecs::ecs_table::Entity;
+
 use super::{commands::{StoredCommand, SystemMessage}, ecs_table::EcsTable, system::{IntoSystem, StoredSystem}, plugin::Plugin};
 
 pub type Resources = HashMap<TypeId, RefCell<Box<dyn Any>>>;
@@ -32,6 +34,7 @@ pub struct Scheduler {
     current_exit_state: Option<AppState>,
     current_state_data: Option<RefCell<Box<dyn Any>>>,
     pub(crate) settings: AppSettings,
+    pub(crate) window_id_to_entity: HashMap<u64, Entity>,
 }
 
 pub type App = Scheduler;
@@ -67,11 +70,12 @@ impl Scheduler {
             current_exit_state: None,
             current_state_data: None,
             settings: Default::default(),
+            window_id_to_entity: HashMap::new(),
         }
     }
 
     #[allow(unused_variables)]
-    fn run_stage<S: 'static>(&mut self, schedule: S) -> Result<(), SystemMessage> {
+    pub(crate) fn run_stage<S: 'static>(&mut self, schedule: S) -> Result<(), SystemMessage> {
         self.run_stage_dynamic(TypeId::of::<S>())
     }
 
@@ -90,6 +94,8 @@ impl Scheduler {
             None
         };
 
+        let mut queue_window_update = vec![];
+
         if let Some(systems) = self.systems.get_mut(&schedule) {
             for system in systems {
                 let commands = RefCell::new(vec![]);
@@ -104,6 +110,10 @@ impl Scheduler {
                             },
                             SystemMessage::ChangeState { new_state, new_enter_state, new_exit_state, data } => {
                                 queue_state_change.push((new_state, new_enter_state, new_exit_state, data));
+                            },
+                            SystemMessage::WindowCreated(window_entity) => {
+                                // we must get its id
+                                queue_window_update.push(window_entity);
                             }
                         }
                     }
@@ -112,6 +122,23 @@ impl Scheduler {
         }
         for (new_state, new_enter_state, new_exit_state, data) in queue_state_change {
             self.change_state(new_state, new_enter_state, new_exit_state, data)?;
+        }
+        #[cfg(feature = "graphics")]
+        {
+            if queue_window_update.len() > 0 {
+                let window_table = self.ecs_table.get_mut(&TypeId::of::<crate::graphics::window::Window>()).unwrap();
+                let window_table = window_table.borrow();
+                for new_window in queue_window_update {
+                    use std::cell::Ref;
+
+                    let raw_window = window_table.get(&new_window).unwrap();
+                    let raw_window = Ref::map(raw_window.borrow(), |r| r.downcast_ref::<crate::graphics::window::Window>().unwrap());
+
+                    let raw_id = raw_window.id();
+
+                    self.window_id_to_entity.insert(raw_id.into(), new_window);
+                }
+            }
         }
         Ok(())
     }

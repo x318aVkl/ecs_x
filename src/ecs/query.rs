@@ -138,6 +138,8 @@ impl_query_get!((T1, T2, T3), ());
 impl_query_get!((T1, T2, T3, T4), ());
 impl_query_get!((T1, T2, T3, T4, T5), ());
 impl_query_get!((T1, T2, T3, T4, T5, T6), ());
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7), ());
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7, T8), ());
 
 impl_query_get!((T1), (F1));
 impl_query_get!((T1, T2), (F1));
@@ -145,6 +147,8 @@ impl_query_get!((T1, T2, T3), (F1));
 impl_query_get!((T1, T2, T3, T4), (F1));
 impl_query_get!((T1, T2, T3, T4, T5), (F1));
 impl_query_get!((T1, T2, T3, T4, T5, T6), (F1));
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7), (F1));
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7, T8), (F1));
 
 
 impl_query_get!((T1), (F1, F2));
@@ -153,6 +157,8 @@ impl_query_get!((T1, T2, T3), (F1, F2));
 impl_query_get!((T1, T2, T3, T4), (F1, F2));
 impl_query_get!((T1, T2, T3, T4, T5), (F1, F2));
 impl_query_get!((T1, T2, T3, T4, T5, T6), (F1, F2));
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7), (F1, F2));
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7, T8), (F1, F2));
 
 
 impl_query_get!((T1), (F1, F2, F3));
@@ -161,7 +167,8 @@ impl_query_get!((T1, T2, T3), (F1, F2, F3));
 impl_query_get!((T1, T2, T3, T4), (F1, F2, F3));
 impl_query_get!((T1, T2, T3, T4, T5), (F1, F2, F3));
 impl_query_get!((T1, T2, T3, T4, T5, T6), (F1, F2, F3));
-
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7), (F1, F2, F3));
+impl_query_get!((T1, T2, T3, T4, T5, T6, T7, T8), (F1, F2, F3));
 
 
 

@@ -13,6 +13,17 @@ pub struct EventWriter<T> {
     events: Vec<T>,
 }
 
+impl<T> EventReader<T> {
+    pub fn new() -> Self {
+        Self {events: vec![]}
+    }
+}
+impl<T> EventWriter<T> {
+    pub fn new() -> Self {
+        Self {events: vec![]}
+    }
+}
+
 
 pub struct EventPlugin<Event> {
     _marker: PhantomData<Event>,
